@@ -5,39 +5,29 @@ namespace App\Http\Controllers;
 use App\Repositories\BookRepositoryInterface;
 use Inertia\Inertia;
 use App\Http\Requests\BookFilterRequest;
+use Illuminate\Http\JsonResponse;
+use Inertia\Response;
 
 class BookController extends Controller
 {
-    protected $bookRepository;
-
-    public function __construct(BookRepositoryInterface $bookRepository)
-    {
-        $this->bookRepository = $bookRepository;
-    }
+    public function __construct(protected BookRepositoryInterface $bookRepository) {}
 
     /**
      * Display the books for the frontend (Inertia)
-     *
-     * @param  BookFilterRequest  $request
-     * @return \Inertia\Response
      */
-    public function index(BookFilterRequest $request)
+    public function index(BookFilterRequest $request): Response
     {
-        $books = $this->bookRepository->getBooks($request->filters());
-
-        return Inertia::render('Books/BookView', compact('books'));
+        return Inertia::render('Books/BookView', [
+            'books' => $this->bookRepository->getBooks($request->filters()),
+        ]);
     }
-
     /**
      * Display the books for the API (JSON)
-     *
-     * @param  BookFilterRequest  $request
-     * @return \Illuminate\Http\JsonResponse
      */
-    public function apiIndex(BookFilterRequest $request)
+    public function apiIndex(BookFilterRequest $request): JsonResponse
     {
-        $books = $this->bookRepository->getBooks($request->filters());
-
-        return response()->json($books);
+        return response()->json(
+            $this->bookRepository->getBooks($request->filters())
+        );
     }
 }

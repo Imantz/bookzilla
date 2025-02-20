@@ -20,28 +20,30 @@ class Book extends Model
     public function scopeFilter(Builder $query, array $filters): Builder 
     {
         return $query
-            ->when(!empty($filters['q']), function ($query) use ($filters) {
+            ->when($filters['q'] ?? false, fn ($query) => $query->where(function ($q) use ($filters) {
                 $searchTerm = strtolower($filters['q']);
-                $query->where(function ($q) use ($searchTerm) {
-                    $q->where('title', 'ILIKE', "%{$searchTerm}%")
-                    ->orWhereHas('authors', fn($q) => $q->where('name', 'ILIKE', "%{$searchTerm}%"));
-                });
-            })
-            ->when(!empty($filters['date_from']) || !empty($filters['date_to']), function ($query) use ($filters) {
-                $dateFrom = $filters['date_from'] ?? now()->subMonth()->toDateString();
-                $dateTo   = $filters['date_to'] ?? now()->toDateString();
-
-                if (!empty($filters['date_from']) || !empty($filters['date_to'])) {
-                    $query->whereBetween('purchases.created_at', ["{$dateFrom} 00:00:00", "{$dateTo} 23:59:59"]);
-                }
-            })
-            ->when(!empty($filters['sort_by']), function ($query) use ($filters) {
-                $sortOrder = in_array(strtolower($filters['sort_order'] ?? ''), ['asc', 'desc']) ? $filters['sort_order'] : 'asc';
-                $query->orderBy($filters['sort_by'], $sortOrder);
-            })
-            ->when(!empty($filters['limit']), function ($query) use ($filters) {
-                $query->limit((int) $filters['limit']);
-            });
+                $q->where('title', 'ILIKE', "%{$searchTerm}%")
+                  ->orWhereHas('authors', fn ($q) => $q->where('name', 'ILIKE', "%{$searchTerm}%"));
+            }))
+            ->when(
+                $filters['date_from'] || $filters['date_to'], 
+                fn ($query) => $query->whereBetween('purchases.created_at', [
+                    $filters['date_from'] ?? now()->subMonth()->toDateString() . ' 00:00:00',
+                    $filters['date_to'] ?? now()->toDateString() . ' 23:59:59'
+                ])
+            )
+            ->when(
+                isset($filters['sort_by']), 
+                fn ($query) => $query->orderBy(
+                    $filters['sort_by'],
+                    in_array(strtolower($filters['sort_order'] ?? 'asc'), ['asc', 'desc']) ? strtolower($filters['sort_order']) : 'asc'
+                )
+            )
+            ->when(
+                isset($filters['limit']) && is_int($filters['limit']) && $filters['limit'] > 0,
+                fn ($query) => $query->limit($filters['limit'])
+            );
     }
+    
 }
 
