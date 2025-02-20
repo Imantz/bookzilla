@@ -15,13 +15,18 @@ git clone https://github.com/Imantz/bookzilla.git && cd bookzilla && cp .env.exa
 npm install && composer install
 ```
 
-### 3. Run Docker Compose
+### 3. Generate APP_KEY
+```sh
+php artisan key:generate
+```
+
+### 4. Run Docker Compose
 This will build containers, generate key, run migrations, and seed the database.
 ```sh
 docker compose -f compose.dev.yaml up -d
 ```
 
-### 4. After successful build
+### 5. After successful build
 ```sh
 npm run dev
 ```
