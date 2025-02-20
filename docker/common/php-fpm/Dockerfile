@@ -120,6 +120,11 @@ CMD ["php-fpm"]
 # Stage 3: Development image
 FROM production AS development
 
+# Update apt package list and install PostgreSQL client for development
+USER root
+RUN mkdir -p /var/lib/apt/lists/partial && chmod -R 755 /var/lib/apt/lists
+RUN rm -rf /var/lib/apt/lists/* && apt-get update && apt-get install -y --no-install-recommends postgresql-client || (echo "Failed to install postgresql-client, retrying..." && apt-get update && apt-get install -y --no-install-recommends postgresql-client)
+
 # Use ARG to define environment variables passed from the Docker build command or Docker Compose.
 ARG XDEBUG_ENABLED=true
 ARG XDEBUG_MODE=develop,coverage,debug,profile
