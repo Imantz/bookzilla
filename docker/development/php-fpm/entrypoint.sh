@@ -23,12 +23,14 @@ if [ "$APP_ENV" = "development" ]; then
     psql -h postgres -U ${DB_USERNAME} -d postgres -c "SELECT 1 FROM pg_database WHERE datname='${DB_DATABASE}'" | grep -q 1 || \
     psql -h postgres -U ${DB_USERNAME} -d postgres -c "CREATE DATABASE ${DB_DATABASE};"
 
+  # Generate the application key if it's not already set
+  if [ -z "$APP_KEY" ]; then
+    echo "Generating Laravel application key..."
+    php artisan key:generate
+  fi
+
   # Run Laravel migrations (only in development)
   php artisan migrate:fresh --seed
-
-  # Generate the application key if it's not already set
-  echo "Generating Laravel application key..."
-  php artisan key:generate
 fi
 
 php artisan config:clear
